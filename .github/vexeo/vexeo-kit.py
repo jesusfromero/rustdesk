@@ -351,6 +351,24 @@ jobs:
           "-s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep",
           '-s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep',
           count=2)
+    # Renombrar la .app de macOS a la marca VEXEO: build.py la genera como
+    # RustDesk.app, así que el DMG y el instalador mostrarían "RustDesk".
+    patch(".github/workflows/flutter-build.yml",
+          "          ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}\n",
+          "          ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}\n"
+          '          # VEXEO: renombrar la .app para que el DMG y el instalador muestren la marca\n'
+          '          RELDIR="./flutter/build/macos/Build/Products/Release"\n'
+          '          app="$(ls -d "$RELDIR"/*.app 2>/dev/null | head -1)"\n'
+          '          [ -n "$app" ] && [ "$app" != "$RELDIR/VEXEO Soporte Remoto.app" ] && mv "$app" "$RELDIR/VEXEO Soporte Remoto.app"\n')
+    patch(".github/workflows/flutter-build.yml",
+          'create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app',
+          'create-dmg --volname "VEXEO Soporte Remoto" --icon "VEXEO Soporte Remoto.app" 200 190 --hide-extension "VEXEO Soporte Remoto.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app"')
+    patch(".github/workflows/flutter-build.yml",
+          'codesign --force --options runtime -s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep --strict ./flutter/build/macos/Build/Products/Release/RustDesk.app -vvv',
+          'codesign --force --options runtime -s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep --strict "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app" -vvv')
+    patch(".github/workflows/flutter-build.yml",
+          'create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app',
+          'create-dmg --volname "VEXEO Soporte Remoto" --icon "VEXEO Soporte Remoto.app" 200 190 --hide-extension "VEXEO Soporte Remoto.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app"')
 
     print("== [5/6] Sincronizar versión (tag = Cargo.toml = env VERSION) ==")
     patch("Cargo.toml",
