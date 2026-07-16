@@ -36,7 +36,10 @@ else
 fi
 
 HBB_DIR=""; KIT_TMP=""
-cleanup() { [[ -n "$HBB_DIR" ]] && rm -rf "$HBB_DIR"; [[ -n "$KIT_TMP" ]] && rm -rf "$KIT_TMP"; }
+# `return 0` al final es obligatorio: si no, cuando el script sale temprano
+# (HBB_DIR/KIT_TMP vacíos) la última prueba `[[ -n "" ]]` devuelve 1 y ese
+# código se convierte en la salida del script aunque hiciéramos `exit 0`.
+cleanup() { [[ -n "$HBB_DIR" ]] && rm -rf "$HBB_DIR"; [[ -n "$KIT_TMP" ]] && rm -rf "$KIT_TMP"; return 0; }
 trap cleanup EXIT
 
 # Exige working tree limpio (protege ejecuciones locales: el flujo hace
