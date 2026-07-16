@@ -46,8 +46,11 @@ jobs:
             ["rustdesk-$TAG-x86_64.msi"]="VEXEO-Soporte-Remoto-Windows.msi"
             ["rustdesk-$TAG-aarch64.dmg"]="VEXEO-Soporte-Remoto-Mac-AppleSilicon.dmg"
             ["rustdesk-$TAG-x86_64.dmg"]="VEXEO-Soporte-Remoto-Mac-Intel.dmg"
-            ["rustdesk-$TAG-universal.apk"]="VEXEO-Soporte-Remoto-Android.apk"
           )
+          # Android: el APK firmado lleva sufijo -signed; el sin firmar no.
+          for cand in "rustdesk-$TAG-universal-signed.apk" "rustdesk-$TAG-universal.apk"; do
+            if grep -qx "$cand" <<< "$assets"; then MAP["$cand"]="VEXEO-Soporte-Remoto-Android.apk"; break; fi
+          done
 
           # Con build fallido, solo finalizamos si están los instaladores clave.
           if [[ "$CONCLUSION" == "failure" ]]; then
