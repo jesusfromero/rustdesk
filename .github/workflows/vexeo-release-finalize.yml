@@ -45,7 +45,6 @@ jobs:
             ["rustdesk-$TAG-x86_64.exe"]="VEXEO-Soporte-Remoto-Windows.exe"
             ["rustdesk-$TAG-x86_64.msi"]="VEXEO-Soporte-Remoto-Windows.msi"
             ["rustdesk-$TAG-aarch64.dmg"]="VEXEO-Soporte-Remoto-Mac-AppleSilicon.dmg"
-            ["rustdesk-$TAG-x86_64.dmg"]="VEXEO-Soporte-Remoto-Mac-Intel.dmg"
           )
           # Android: el APK firmado lleva sufijo -signed; el sin firmar no.
           for cand in "rustdesk-$TAG-universal-signed.apk" "rustdesk-$TAG-universal.apk"; do
@@ -54,7 +53,7 @@ jobs:
 
           # Con build fallido, solo finalizamos si están los instaladores clave.
           if [[ "$CONCLUSION" == "failure" ]]; then
-            for req in "rustdesk-$TAG-x86_64.exe" "rustdesk-$TAG-x86_64.dmg" "rustdesk-$TAG-aarch64.dmg"; do
+            for req in "rustdesk-$TAG-x86_64.exe" "rustdesk-$TAG-aarch64.dmg"; do
               if ! grep -qx "$req" <<< "$assets"; then
                 echo "::warning::Build con fallos y falta $req — release $TAG se queda en prerelease."; exit 0
               fi

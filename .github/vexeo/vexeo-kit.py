@@ -292,6 +292,41 @@ def main():
           "Connecting to the VEXEO network...",
           required=False)
 
+    # Cadenas de UI residuales que dicen "RustDesk" (visibles al usuario).
+    # Español (es.rs) e inglés (en.rs) — los idiomas de los clientes VEXEO.
+    patch("src/lang/es.rs",
+          '("connecting_status", "Conexión a la red RustDesk en progreso..."),',
+          '("connecting_status", "Conexión a la red VEXEO en progreso..."),',
+          required=False)
+    patch("src/lang/es.rs",
+          '("powered_by_me", "Con tecnología de RustDesk"),',
+          '("powered_by_me", "Con tecnología de VEXEO"),')
+    patch("src/lang/en.rs",
+          '("powered_by_me", "Powered by RustDesk"),',
+          '("powered_by_me", "Powered by VEXEO"),')
+    patch("src/lang/es.rs",
+          '("About RustDesk", "Acerca de RustDesk"),',
+          f'("About RustDesk", "Acerca de {APP_NAME}"),')
+    patch("src/lang/es.rs",
+          '("Show RustDesk", "Mostrar RustDesk"),',
+          f'("Show RustDesk", "Mostrar {APP_NAME}"),')
+    patch("src/lang/es.rs",
+          '("Keep RustDesk background service", "Dejar RustDesk como Servicio en 2do plano"),',
+          '("Keep RustDesk background service", "Dejar VEXEO en segundo plano"),')
+    # Inglés: About/Show/Keep no tienen entrada en en.rs (caen al literal de la
+    # key). Insertamos overrides anclando a la 1ª entrada estable del mapa.
+    patch("src/lang/en.rs",
+          '        ("desk_tip", "Your desktop can be accessed with this ID and password."),\n',
+          '        ("desk_tip", "Your desktop can be accessed with this ID and password."),\n'
+          f'        ("About RustDesk", "About {APP_NAME}"),\n'
+          f'        ("Show RustDesk", "Show {APP_NAME}"),\n'
+          '        ("Keep RustDesk background service", "Keep VEXEO background service"),\n')
+    # El clic en "Con tecnología de..." abría rustdesk.com
+    patch("flutter/lib/common.dart",
+          "launchUrl(Uri.parse('https://rustdesk.com'));",
+          "launchUrl(Uri.parse('https://vexeo.es'));",
+          required=False)
+
     apply_update_check()
 
     print("== [4/6] Ajustes de CI del fork ==")
@@ -351,15 +386,21 @@ jobs:
           "-s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep",
           '-s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep',
           count=2)
-    # Renombrar la .app de macOS a la marca VEXEO: build.py la genera como
-    # RustDesk.app, así que el DMG y el instalador mostrarían "RustDesk".
+    # Renombrar la .app Y el ejecutable de macOS a la marca VEXEO. build.py
+    # genera RustDesk.app con ejecutable 'rustdesk'; el instalador de servicio
+    # (agent.plist) lanza /Applications/<app>.app/Contents/MacOS/<app>, es decir
+    # el ejecutable POR NOMBRE = get_app_name() = "VEXEO Soporte Remoto". Si no
+    # coincide, el servicio/agente no arranca (acceso desatendido roto).
     patch(".github/workflows/flutter-build.yml",
           "          ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}\n",
           "          ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-build-args }}\n"
-          '          # VEXEO: renombrar la .app para que el DMG y el instalador muestren la marca\n'
+          '          # VEXEO: renombrar la .app y el ejecutable a la marca (instalador, servicio y agente)\n'
           '          RELDIR="./flutter/build/macos/Build/Products/Release"\n'
           '          app="$(ls -d "$RELDIR"/*.app 2>/dev/null | head -1)"\n'
-          '          [ -n "$app" ] && [ "$app" != "$RELDIR/VEXEO Soporte Remoto.app" ] && mv "$app" "$RELDIR/VEXEO Soporte Remoto.app"\n')
+          '          if [ -n "$app" ] && [ "$app" != "$RELDIR/VEXEO Soporte Remoto.app" ]; then mv "$app" "$RELDIR/VEXEO Soporte Remoto.app"; fi\n'
+          '          APP="$RELDIR/VEXEO Soporte Remoto.app"\n'
+          '          EXE="$(/usr/libexec/PlistBuddy -c \'Print :CFBundleExecutable\' "$APP/Contents/Info.plist" 2>/dev/null || echo rustdesk)"\n'
+          '          if [ "$EXE" != "VEXEO Soporte Remoto" ] && [ -f "$APP/Contents/MacOS/$EXE" ]; then mv "$APP/Contents/MacOS/$EXE" "$APP/Contents/MacOS/VEXEO Soporte Remoto"; /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable \'VEXEO Soporte Remoto\'" "$APP/Contents/Info.plist"; fi\n')
     patch(".github/workflows/flutter-build.yml",
           'create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app',
           'create-dmg --volname "VEXEO Soporte Remoto" --icon "VEXEO Soporte Remoto.app" 200 190 --hide-extension "VEXEO Soporte Remoto.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app"')
@@ -369,6 +410,22 @@ jobs:
     patch(".github/workflows/flutter-build.yml",
           'create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg ./flutter/build/macos/Build/Products/Release/RustDesk.app',
           'create-dmg --volname "VEXEO Soporte Remoto" --icon "VEXEO Soporte Remoto.app" 200 190 --hide-extension "VEXEO Soporte Remoto.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app"')
+    # Quitar macOS Intel (x86_64-apple-darwin): no lo distribuimos y es el build
+    # más lento. Se elimina de la matriz build-for-macOS y su descarga en
+    # publish_unsigned (que si no fallaría al no existir el artefacto x86_64).
+    wf = ".github/workflows/flutter-build.yml"
+    _c = open(wf, encoding="utf-8").read()
+    _c2 = re.sub(r"\n          - \{\n              target: x86_64-apple-darwin,.*?\n            \}",
+                 "", _c, count=1, flags=re.S)
+    if _c2 == _c:
+        fail("no se pudo quitar la entrada macOS Intel de la matriz")
+    _c = _c2
+    _c2 = re.sub(r"      - name: Download [Aa]rtifacts\n        uses: actions/download-artifact@[0-9a-f]+ # v8\.0\.1\n        with:\n          name: rustdesk-unsigned-macos-x86_64\n          path: \./\n\n",
+                 "", _c, count=1)
+    if _c2 == _c:
+        note("no se encontró la descarga unsigned-macos-x86_64 en publish_unsigned")
+    open(wf, "w", encoding="utf-8").write(_c2)
+    print("  ✓ macOS Intel eliminado (matriz + publish_unsigned)")
 
     print("== [5/6] Sincronizar versión (tag = Cargo.toml = env VERSION) ==")
     patch("Cargo.toml",
