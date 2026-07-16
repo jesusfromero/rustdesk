@@ -9,6 +9,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+-[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+-[0-9]+'
 
+
 # El token por defecto del repo es de solo lectura; el paso "Publish Release"
 # necesita crear releases y subir assets.
 permissions:
