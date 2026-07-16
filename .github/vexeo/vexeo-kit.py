@@ -341,6 +341,16 @@ jobs:
               case "$name" in *-${{ matrix.job.arch }}.dmg) continue;; esac
               mv "$name" "${name%%.dmg}-${{ matrix.job.arch }}.dmg"
           done""")
+    # Firma macOS: entrecomillar password e identidad. Upstream los interpola
+    # sin comillas y un password con metacaracteres de shell (p.ej. &) o una
+    # identidad con espacios rompería el paso de firma.
+    patch(".github/workflows/flutter-build.yml",
+          "security unlock-keychain -p ${{ secrets.MACOS_P12_PASSWORD }} rustdesk.keychain",
+          'security unlock-keychain -p "${{ secrets.MACOS_P12_PASSWORD }}" rustdesk.keychain')
+    patch(".github/workflows/flutter-build.yml",
+          "-s ${{ secrets.MACOS_CODESIGN_IDENTITY }} --deep",
+          '-s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep',
+          count=2)
 
     print("== [5/6] Sincronizar versión (tag = Cargo.toml = env VERSION) ==")
     patch("Cargo.toml",
