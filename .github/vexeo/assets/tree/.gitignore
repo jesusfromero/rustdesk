@@ -1,0 +1,4 @@
+# El .gitignore raíz tiene "*png"; aquí se re-incluye para que los
+# iconos del overlay se rastreen (si no, autoupdate.sh los pierde en cada snapshot).
+!*.png
+!*png

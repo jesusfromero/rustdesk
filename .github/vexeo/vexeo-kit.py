@@ -228,6 +228,11 @@ def install_kit_and_assets(repo_root):
     n = 0
     for dirpath, _dirnames, filenames in os.walk(overlay):
         for fname in filenames:
+            # .gitignore vive en la raíz del overlay solo para que git rastree los
+            # PNG (el .gitignore del repo lleva "*png"). NO es un asset: si se
+            # copiara, su rel sería ".gitignore" y machacaría el .gitignore raíz.
+            if fname == ".gitignore":
+                continue
             src = os.path.join(dirpath, fname)
             rel = os.path.relpath(src, overlay)
             dst = os.path.join(repo_root, rel)

@@ -159,14 +159,18 @@ cp -R .github/vexeo/. "$KIT_TMP/"
 git checkout -q --detach "$UP_COMMIT"
 python3 "$KIT_TMP/vexeo-kit.py" --version "$NEW_VERSION" --hbb-pin "$HBB_SHA"
 git add -A -- ':!libs/hbb_common'
-# `git add` RESPETA .gitignore, y el de upstream lleva "*png". Los iconos que el
-# kit copia desde el overlay se escribían en el árbol pero nunca entraban en el
-# índice, así que el snapshot salía con los iconos de RustDesk. Pasó de 1.4.9-5
-# a 1.4.9-7 sin que nadie lo detectara (el APK se publicó con el icono ajeno).
-# Se fuerzan uno a uno: `git add -A -f` metería cualquier artefacto de build.
+# `git add` RESPETA .gitignore, y el de upstream lleva "*png". Hay que forzar DOS
+# familias de ficheros o el snapshot pierde iconos (pasó de 1.4.9-5 a -8):
+#  (1) los DESTINO en el árbol branded (flutter/android/.../ic_launcher.png, etc.)
+#      — sin ellos el APK/DMG sale con el icono de RustDesk.
+#  (2) el OVERLAY FUENTE .github/vexeo/assets/tree/**.png — el snapshot es el nuevo
+#      master y el siguiente autoupdate lee el overlay de ahí; si no se preservan,
+#      cada build vacía el overlay hasta que el guard de abajo rompe la cadena.
+# `git add -A -f` metería artefactos de build, por eso se enumeran del overlay.
 while IFS= read -r _rel; do
     [[ -n "$_rel" ]] && git add -f -- "$_rel"
 done < <(cd "$KIT_TMP/assets/tree" && find . -type f | sed 's|^\./||')
+git add -f .github/vexeo/assets/tree/
 git update-index --add --cacheinfo "160000,$HBB_SHA,libs/hbb_common"
 TREE=$(git write-tree)
 
