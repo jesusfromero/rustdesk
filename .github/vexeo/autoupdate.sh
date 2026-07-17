@@ -153,8 +153,31 @@ cp -R .github/vexeo/. "$KIT_TMP/"
 git checkout -q --detach "$UP_COMMIT"
 python3 "$KIT_TMP/vexeo-kit.py" --version "$NEW_VERSION" --hbb-pin "$HBB_SHA"
 git add -A -- ':!libs/hbb_common'
+# `git add` RESPETA .gitignore, y el de upstream lleva "*png". Los iconos que el
+# kit copia desde el overlay se escribían en el árbol pero nunca entraban en el
+# índice, así que el snapshot salía con los iconos de RustDesk. Pasó de 1.4.9-5
+# a 1.4.9-7 sin que nadie lo detectara (el APK se publicó con el icono ajeno).
+# Se fuerzan uno a uno: `git add -A -f` metería cualquier artefacto de build.
+while IFS= read -r _rel; do
+    [[ -n "$_rel" ]] && git add -f -- "$_rel"
+done < <(cd "$KIT_TMP/assets/tree" && find . -type f | sed 's|^\./||')
 git update-index --add --cacheinfo "160000,$HBB_SHA,libs/hbb_common"
 TREE=$(git write-tree)
+
+# Red de seguridad de la regresión anterior: si un asset del snapshot es idéntico
+# al de upstream, el overlay no llegó. Mejor romper el build que publicar una
+# release con la marca de otro.
+for _icon in flutter/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png \
+             flutter/windows/runner/resources/app_icon.ico \
+             flutter/macos/Runner/AppIcon.icns; do
+    _ours=$(git rev-parse "$TREE:$_icon" 2>/dev/null || true)
+    _theirs=$(git rev-parse "$UP_COMMIT:$_icon" 2>/dev/null || true)
+    if [[ -n "$_theirs" && "$_ours" == "$_theirs" ]]; then
+        echo "ERROR: $_icon es idéntico al de upstream — el overlay de assets no se aplicó." >&2
+        exit 1
+    fi
+done
+echo "assets del overlay verificados: distintos de los de upstream"
 
 if [[ "$TREE" == "$(git rev-parse "$MASTER^{tree}")" && "$FORCE" != "true" ]]; then
     # El árbol no cambia respecto a master. Recuperación: si el tag de la
