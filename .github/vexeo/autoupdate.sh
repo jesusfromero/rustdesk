@@ -71,12 +71,18 @@ if [[ "$UPSTREAM_TAG" == "$OUR_BASE" && "$FORCE" != "true" ]]; then
 fi
 
 # Siguiente sufijo -N para esta base (todas las releases del fork llevan -N).
+# Se miran los TAGS además de las releases: un tag sin release es un build que
+# se lanzó y no llegó a publicar (cancelado o fallido). Su número está gastado
+# igualmente — si se reutiliza, el push atómico del tag se rechaza y el run
+# muere al final, después de haber hecho todo el trabajo.
+OUR_TAGS=$(git ls-remote --tags origin 2>/dev/null | sed 's|.*refs/tags/||' | grep -v '\^{}$' || true)
 esc="${UPSTREAM_TAG//./\\.}"
 MAX_N=0
 while read -r t; do
     [[ "$t" =~ ^${esc}-([0-9]+)$ ]] || continue
     n="${BASH_REMATCH[1]}"; (( n > MAX_N )) && MAX_N=$n
-done <<< "$OUR_RAW"
+done <<< "$OUR_RAW
+$OUR_TAGS"
 NEW_N=$((MAX_N + 1))
 (( NEW_N <= 9 )) || { echo "Sufijo -$NEW_N > 9 rompería la comparación de versiones"; exit 1; }
 NEW_VERSION="${UPSTREAM_TAG}-${NEW_N}"
