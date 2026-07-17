@@ -13,13 +13,13 @@
 #
 # Entorno:
 #   VEXEO_PAT  (solo CI) token con Contents:RW + Workflows:RW en
-#              jesusfromero/rustdesk y Contents:RW en jesusfromero/hbb_common.
+#              jesusfromero/vexeo-soporte-remoto y Contents:RW en jesusfromero/hbb_common.
 #              En local no hace falta: se usan tus credenciales de git/gh.
 #   FORCE=true rebuild aunque no haya versión upstream nueva (sube sufijo -N).
 set -euo pipefail
 
 UPSTREAM_REPO="rustdesk/rustdesk"
-FORK_REPO="jesusfromero/rustdesk"
+FORK_REPO="jesusfromero/vexeo-soporte-remoto"
 HBB_UPSTREAM="https://github.com/rustdesk/hbb_common"
 HBB_FORK_REPO="jesusfromero/hbb_common"
 FORCE="${FORCE:-false}"
@@ -107,8 +107,15 @@ import re, sys
 p = "src/config.rs"
 c = open(p).read()
 subs = [
+    # APP_NAME NO puede llevar espacios: upstream lo interpola sin comillas en
+    # `sc create {app_name}`, `reg add {subkey}` y `taskkill /F /IM
+    # {app_name}.exe`, y deriva de él el esquema URL (get_uri_prefix) y la
+    # extensión de fichero. Con espacios: el servicio de Windows no se crea, la
+    # app no sale en Programas y características y el esquema es inválido
+    # (RFC 3986) → los enlaces de conexión se descartan en silencio.
+    # Debe coincidir con APP_NAME de .github/vexeo/vexeo-kit.py.
     (r'pub static ref APP_NAME: RwLock<String> = RwLock::new\("RustDesk"\.to_owned\(\)\);',
-     'pub static ref APP_NAME: RwLock<String> = RwLock::new("VEXEO Soporte Remoto".to_owned());'),
+     'pub static ref APP_NAME: RwLock<String> = RwLock::new("VexeoSoporte".to_owned());'),
     (r'pub const RENDEZVOUS_SERVERS: &\[&str\] = &\[[^\]]*\];',
      'pub const RENDEZVOUS_SERVERS: &[&str] = &["rustdesk.vexeo.digital"];'),
     (r'pub const RS_PUB_KEY: &str = "[^"]*";',

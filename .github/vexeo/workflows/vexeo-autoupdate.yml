@@ -29,7 +29,7 @@ jobs:
           VEXEO_PAT: ${{ secrets.VEXEO_PAT }}
         run: |
           if [ -z "$VEXEO_PAT" ]; then
-            echo "::error::Falta el secret VEXEO_PAT (fine-grained PAT con Contents:RW + Workflows:RW en jesusfromero/rustdesk y Contents:RW en jesusfromero/hbb_common)"
+            echo "::error::Falta el secret VEXEO_PAT (fine-grained PAT con Contents:RW + Workflows:RW en jesusfromero/vexeo-soporte-remoto y Contents:RW en jesusfromero/hbb_common)"
             exit 1
           fi
 
