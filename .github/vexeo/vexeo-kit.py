@@ -760,6 +760,23 @@ def main():
     patch(".github/workflows/flutter-build.yml",
           "python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe",
           f"python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/{APP_NAME}.exe")
+    # Desactivar el MSI. Solo se distribuye el .exe (--silent-install), el MSI
+    # arrastra res/msi/**/RustDesk.wxs con marca RustDesk, y su preprocess.py se
+    # rompió al renombrar el binario (WIX0150: $(var.Product) undefined) tumbando
+    # TODO el job de Windows (el paso va antes de subir el exe). Se salta el paso
+    # y se quita el .msi de la subida (finalize ignora los assets que no existen).
+    patch(".github/workflows/flutter-build.yml",
+          "        # is x64 / ARM64; the produced Package.msi is globbed since its bin/<platform>/ dir varies.\n"
+          "        if: env.UPLOAD_ARTIFACT == 'true'",
+          "        # is x64 / ARM64; the produced Package.msi is globbed since its bin/<platform>/ dir varies.\n"
+          "        # VEXEO: MSI desactivado (distribuimos solo el .exe).\n"
+          "        if: false")
+    patch(".github/workflows/flutter-build.yml",
+          "          files: |\n"
+          "            ./SignOutput/rustdesk-*.msi\n"
+          "            ./SignOutput/rustdesk-*.exe",
+          "          files: |\n"
+          "            ./SignOutput/rustdesk-*.exe")
     patch(".github/workflows/flutter-tag.yml",
           "\njobs:\n  run-flutter-tag-build:",
           """
