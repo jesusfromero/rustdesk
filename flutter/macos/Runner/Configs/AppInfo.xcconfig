@@ -11,4 +11,4 @@ PRODUCT_NAME = rustdesk
 PRODUCT_BUNDLE_IDENTIFIER = es.vexeo.soporte
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Basado en RustDesk - Configurado por VEXEO Digital Solutions, S.L.
+PRODUCT_COPYRIGHT = Copyright © 2026 Purslane Tech Pte. Ltd. Modificado por VEXEO Digital Solutions, S.L. (2026). Licencia AGPL-3.0, sin garantía. Código fuente: https://github.com/jesusfromero/vexeo-soporte-remoto

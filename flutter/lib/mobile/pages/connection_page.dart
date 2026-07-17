@@ -124,7 +124,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
         ? const SizedBox(height: 0)
         : InkWell(
             onTap: () async {
-              final url = 'https://github.com/jesusfromero/rustdesk/releases/latest';
+              final url = 'https://github.com/jesusfromero/vexeo-soporte-remoto/releases/latest';
               // https://pub.dev/packages/url_launcher#configuration
               // https://developer.android.com/training/package-visibility/use-cases#open-urls-custom-tabs
               //

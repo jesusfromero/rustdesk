@@ -949,7 +949,7 @@ pub fn check_software_update() {
 // VEXEO: consulta la última release del fork en la API de GitHub.
 #[tokio::main(flavor = "current_thread")]
 pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
-    let url = "https://api.github.com/repos/jesusfromero/rustdesk/releases/latest".to_string();
+    let url = "https://api.github.com/repos/jesusfromero/vexeo-soporte-remoto/releases/latest".to_string();
     let proxy_conf = Config::get_socks();
     let tls_url = get_url_for_tls(&url, &proxy_conf);
     let tls_type = get_cached_tls_type(tls_url);
@@ -988,7 +988,7 @@ pub async fn do_check_software_update() -> hbb_common::ResultType<()> {
         .unwrap_or_default()
         .trim_start_matches('v')
         .to_string();
-    let response_url = format!("https://github.com/jesusfromero/rustdesk/releases/tag/{latest_release_version}");
+    let response_url = format!("https://github.com/jesusfromero/vexeo-soporte-remoto/releases/tag/{latest_release_version}");
 
     if get_version_number(&latest_release_version) > get_version_number(crate::VERSION) {
         #[cfg(feature = "flutter")]

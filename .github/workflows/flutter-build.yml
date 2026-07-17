@@ -44,7 +44,7 @@ env:
   # 2. Update the `VCPKG_COMMIT_ID` in `ci.yml` and `playground.yml`.
   VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
   ARMV7_VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836" # 2025.01.13, got "/opt/artifacts/vcpkg/vcpkg: No such file or directory" with latest version
-  VERSION: "1.4.9-7"
+  VERSION: "1.4.9-8"
   NDK_VERSION: "r28c"
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: "${{ secrets.ANDROID_SIGNING_KEY }}"
@@ -812,10 +812,10 @@ jobs:
           # VEXEO: renombrar la .app y el ejecutable a la marca (instalador, servicio y agente)
           RELDIR="./flutter/build/macos/Build/Products/Release"
           app="$(ls -d "$RELDIR"/*.app 2>/dev/null | head -1)"
-          if [ -n "$app" ] && [ "$app" != "$RELDIR/VEXEO Soporte Remoto.app" ]; then mv "$app" "$RELDIR/VEXEO Soporte Remoto.app"; fi
-          APP="$RELDIR/VEXEO Soporte Remoto.app"
+          if [ -n "$app" ] && [ "$app" != "$RELDIR/VexeoSoporte.app" ]; then mv "$app" "$RELDIR/VexeoSoporte.app"; fi
+          APP="$RELDIR/VexeoSoporte.app"
           EXE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Contents/Info.plist" 2>/dev/null || echo rustdesk)"
-          if [ "$EXE" != "VEXEO Soporte Remoto" ] && [ -f "$APP/Contents/MacOS/$EXE" ]; then mv "$APP/Contents/MacOS/$EXE" "$APP/Contents/MacOS/VEXEO Soporte Remoto"; /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable 'VEXEO Soporte Remoto'" "$APP/Contents/Info.plist"; fi
+          if [ "$EXE" != "VexeoSoporte" ] && [ -f "$APP/Contents/MacOS/$EXE" ]; then mv "$APP/Contents/MacOS/$EXE" "$APP/Contents/MacOS/VexeoSoporte"; /usr/libexec/PlistBuddy -c "Set :CFBundleExecutable 'VexeoSoporte'" "$APP/Contents/Info.plist"; fi
 
       - name: create unsigned dmg
         if: env.UPLOAD_ARTIFACT == 'true'
@@ -823,7 +823,7 @@ jobs:
           CREATE_DMG="$(command -v create-dmg)"
           CREATE_DMG="$(readlink -f "$CREATE_DMG")"
           sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
-          create-dmg --volname "VEXEO Soporte Remoto" --icon "VEXEO Soporte Remoto.app" 200 190 --hide-extension "VEXEO Soporte Remoto.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app"
+          create-dmg --volname "VEXEO Soporte Remoto" --icon "VexeoSoporte.app" 200 190 --hide-extension "VexeoSoporte.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg "./flutter/build/macos/Build/Products/Release/VexeoSoporte.app"
 
       - name: Upload unsigned macOS app
         if: env.UPLOAD_ARTIFACT == 'true'
@@ -844,8 +844,8 @@ jobs:
           security unlock-keychain -p "${{ secrets.MACOS_P12_PASSWORD }}" rustdesk.keychain
           # start sign the rustdesk.app and dmg
           rm -rf *.dmg || true
-          codesign --force --options runtime -s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep --strict "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app" -vvv
-          create-dmg --volname "VEXEO Soporte Remoto" --icon "VEXEO Soporte Remoto.app" 200 190 --hide-extension "VEXEO Soporte Remoto.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg "./flutter/build/macos/Build/Products/Release/VEXEO Soporte Remoto.app"
+          codesign --force --options runtime -s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep --strict "./flutter/build/macos/Build/Products/Release/VexeoSoporte.app" -vvv
+          create-dmg --volname "VEXEO Soporte Remoto" --icon "VexeoSoporte.app" 200 190 --hide-extension "VexeoSoporte.app" --window-size 800 400 --app-drop-link 600 185 rustdesk-${{ env.VERSION }}.dmg "./flutter/build/macos/Build/Products/Release/VexeoSoporte.app"
           codesign --force --options runtime -s "${{ secrets.MACOS_CODESIGN_IDENTITY }}" --deep --strict rustdesk-${{ env.VERSION }}.dmg -vvv
           # notarize the rustdesk-${{ env.VERSION }}.dmg
           rcodesign notary-submit --api-key-path ${{ github.workspace }}/rustdesk.json  --staple rustdesk-${{ env.VERSION }}.dmg

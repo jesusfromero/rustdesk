@@ -92,10 +92,10 @@ BEGIN
             VALUE "CompanyName", "VEXEO Digital Solutions, S.L." "\0"
             VALUE "FileDescription", "VEXEO Soporte Remoto" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "rustdesk" "\0"
-            VALUE "LegalCopyright", "Copyright © 2026 Purslane Tech Pte. Ltd. All rights reserved." "\0"
-            VALUE "OriginalFilename", "rustdesk.exe" "\0"
-            VALUE "ProductName", "VEXEO Soporte Remoto" "\0"
+            VALUE "InternalName", "VexeoSoporte" "\0"
+            VALUE "LegalCopyright", "Copyright © 2026 Purslane Tech Pte. Ltd. Modificado por VEXEO Digital Solutions, S.L. (2026). Licencia AGPL-3.0, sin garantía. Código fuente: https://github.com/jesusfromero/vexeo-soporte-remoto" "\0"
+            VALUE "OriginalFilename", "VexeoSoporte.exe" "\0"
+            VALUE "ProductName", "VexeoSoporte" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
