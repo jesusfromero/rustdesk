@@ -414,6 +414,20 @@ def main():
     patch("flutter/windows/runner/main.cpp",
           'std::wstring app_name = L"RustDesk";',
           f'std::wstring app_name = L"{APP_NAME}";')
+    # Nombre del ejecutable de Windows. Upstream compila el Runner de Flutter como
+    # "rustdesk.exe" (BINARY_NAME). El instalador (install_me) NO renombra el exe
+    # —solo update_me lo hace—, así que en instalación LIMPIA el fichero queda como
+    # rustdesk.exe mientras el acceso directo del escritorio apunta a
+    # "{app_name}.exe" (VexeoSoporte.exe) → .lnk roto con icono genérico, y
+    # rustdesk.exe visible en la carpeta. Al llamar al binario VexeoSoporte desde
+    # el build, el fichero casa con el target del .lnk (como en upstream, donde
+    # BINARY_NAME==app_name), el acceso directo resuelve y rustdesk.exe desaparece.
+    # Requiere el patch del flag -e del packer (sección CI) o el packer lanzaría un
+    # exe inexistente tras instalar. NO renombrar librustdesk.dll: se carga por
+    # nombre literal (native_model.dart, main.cpp) y rompería la carga FFI.
+    patch("flutter/windows/CMakeLists.txt",
+          'set(BINARY_NAME "rustdesk")',
+          f'set(BINARY_NAME "{APP_NAME}")')
     patch("flutter/android/app/src/main/AndroidManifest.xml",
           r'android:label="[^"]*"',
           f'android:label="{BRAND}"',
@@ -500,6 +514,41 @@ def main():
           is_regex=True)
     patch("flutter/lib/desktop/widgets/tabbar_widget.dart",
           '"RustDesk",', f'"{APP_NAME}",')
+
+    # --- Colores corporativos VEXEO ----------------------------------------
+    # Se sustituye el azul de RustDesk por el teal de marca #126B62 (--vx-primary
+    # de la web). NO se usa el turquesa de acento #26decb: RustDesk pinta texto
+    # BLANCO sobre accent/button y blanco sobre #26decb da ~1.3:1 (ilegible; AA
+    # exige 4.5:1). Blanco sobre #126B62 da 6.4:1, mejor incluso que el azul
+    # original. Cambiar las constantes de MyTheme propaga el color a toda la app
+    # (botones, pestañas, colorScheme.secondary) sin tocar decenas de widgets.
+    patch("flutter/lib/common.dart",
+          "  static const Color accent = Color(0xFF0071FF);\n"
+          "  static const Color accent50 = Color(0x770071FF);\n"
+          "  static const Color accent80 = Color(0xAA0071FF);",
+          "  static const Color accent = Color(0xFF126B62);\n"
+          "  static const Color accent50 = Color(0x77126B62);\n"
+          "  static const Color accent80 = Color(0xAA126B62);")
+    patch("flutter/lib/common.dart",
+          "  static const Color button = Color(0xFF2C8CFF);",
+          "  static const Color button = Color(0xFF126B62);")
+    # Tinte de los diálogos informativos (_msgboxColor por defecto).
+    patch("flutter/lib/common.dart",
+          "  return Color(0xFF2C8CFF);",
+          "  return Color(0xFF126B62);")
+    # Tarjeta azul del "Acerca de" (fondo hardcodeado, texto blanco encima).
+    patch("flutter/lib/desktop/pages/desktop_setting_page.dart",
+          "                decoration: const BoxDecoration(color: Color(0xFF2c8cff)),",
+          "                decoration: const BoxDecoration(color: Color(0xFF126B62)),")
+    # Gradiente de la tarjeta de estado del servidor (cian→azul de RustDesk).
+    patch("flutter/lib/desktop/pages/server_page.dart",
+          "          colors: [\n            Color(0xff00bfe1),\n            Color(0xff0071ff),\n          ],",
+          "          colors: [\n            Color(0xff13a883),\n            Color(0xff126b62),\n          ],")
+    # Color del tema nativo de Android (splash / barra de estado del arranque).
+    patch("flutter/android/app/src/main/res/values/colors.xml",
+          '<color name="primary">#FF0071FF</color>',
+          '<color name="primary">#FF126B62</color>')
+
     # --- i18n ---------------------------------------------------------------
     # translate() (src/lang.rs) YA sustituye "RustDesk"→APP_NAME en runtime
     # cuando is_rustdesk()==false, en los 50 idiomas y también en el fallback al
@@ -698,6 +747,14 @@ def main():
     patch(".github/workflows/flutter-build.yml",
           "  build-for-windows-sciter:\n    name:",
           "  build-for-windows-sciter:\n    if: false\n    name:")
+    # Companion del renombrado de BINARY_NAME: el packer portable, tras extraer,
+    # ejecuta el exe indicado en -e. Al llamarse ahora VexeoSoporte.exe, si -e
+    # siguiera apuntando a rustdesk.exe el packer lanzaría un fichero inexistente
+    # y la app no arrancaría tras instalar. (El otro -e de la línea ~510 es del
+    # job build-for-windows-sciter, desactivado arriba con if:false.)
+    patch(".github/workflows/flutter-build.yml",
+          "python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe",
+          f"python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/{APP_NAME}.exe")
     patch(".github/workflows/flutter-tag.yml",
           "\njobs:\n  run-flutter-tag-build:",
           """
