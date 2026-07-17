@@ -3,7 +3,7 @@
 <plist version="1.0">
     <dict>
         <key>Label</key>
-        <string>com.carriez.RustDesk_server</string>
+        <string>es.vexeo.RustDesk_server</string>
 
 	<key>AssociatedBundleIdentifiers</key>
 	<string>com.carriez.rustdesk</string>
